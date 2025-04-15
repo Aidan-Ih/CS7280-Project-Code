@@ -1,52 +1,38 @@
-# How to Train Your Filter: A Comparison of Learned and Adaptive Filters
+# Fast Partitioned Learned Bloom Filter
 
-This repository contains a compilation of implementations for **[Ada-BF](https://github.com/DAIZHENWEI/Ada-BF)**, **[FastPLBF](https://github.com/atsukisato/FastPLBF)**, and **[AdaptiveQF](https://github.com/splatlab/adaptiveqf)** filters. We also provide code for processing the [Fake News](https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset), [Malicious URLs](https://www.kaggle.com/datasets/sid321axn/malicious-urls-dataset), and [Ember](https://github.com/elastic/ember) datasets for use with this filter.
+This repository contains python implementation for our paper "[Fast Partitioned Learned Bloom Filter](https://arxiv.org/abs/2306.02846)" (NeurIPS 2023).
+Three methods (PLBF, fast PLBF, and fast PLBF++) are implemented in two different frameworks: one was designed in the PLBF paper, and the other is our modified version.
 
-Ultimately, this repository provides the tools to perform a comparison of the different filters under different datasets and different query distributions.
+## Abstract
 
-## Starting with the code
-The **AdaptiveQF** is implemented in C, while **Ada-BF** and **FastPLBF** are implemented in Python. Some additional work was done to make sure all implementations could work on the same datsets and queries.
+A Bloom filter is a memory-efficient data structure for approximate membership queries used in numerous fields of computer science. Recently, learned Bloom filters that achieve better memory efficiency using machine learning models have attracted attention. One such filter, the partitioned learned Bloom filter (PLBF), achieves excellent memory efficiency. However, PLBF requires a $O(N^3 k)$ time complexity to construct the data structure, where $N$ and $k$ are the hyperparameters of PLBF. One can improve memory efficiency by increasing $N$, but the construction time becomes extremely long. Thus, we propose two methods that can reduce the construction time while maintaining the memory efficiency of PLBF. First, we propose fast PLBF, which can construct the same data structure as PLBF with a smaller time complexity $O(N^2 k)$. Second, we propose fast PLBF++, which can construct the data structure with even smaller time complexity $O(N k \log N + Nk^2)$. Fast PLBF++ does not necessarily construct the same data structure as PLBF. Still, it is almost as memory efficient as PLBF, and it is proved that fast PLBF++ has the same data structure as PLBF when the distribution satisfies a certain constraint. Our experimental results from real-world datasets show that (i) fast PLBF and fast PLBF++ can construct the data structure up to 233 and 761 times faster than PLBF, (ii) fast PLBF can achieve the same memory efficiency as PLBF, and (iii) fast PLBF++ can achieve almost the same memory efficiency as PLBF.
 
-To prepare the **AdaptiveQF**, you first need to make sure you have [SplinterDB](https://splinterdb.org/) set up. Then, we can run `make` to create the necessary executables.
+## Framework in the PLBF paper
 
-## Processing Datasets and Training Models
+This framework is designed to minimize the memory usage under the condition of expected false positive rate.
 
-For the datasets, to ensure they are in a standardized format for all filters, we chose to create updated CSV files for each dataset which contain the key, the score, and the true label. All the learned filters require this information, while the adaptive filter simply requires the key and the true label.
+**Input arguments**
+- `--data_path`: Csv file contains the items, scores, and labels
+- `--N`: Number of *segments*
+- `--k`: Number of *regions*
+- `--F`: Target overall false positive rate
 
-For **URL** and **News** data:
-- To obtain datasets:
-    - Take **URL** and **News** data from Kaggle
-- To train models:
-    - URL: (insert Aidan info here)
-    - News: (insert Aidan info here)
+**Commands**
+- run the PLBF: `python src/PLBFs/PLBF.py --data_path data/example.csv --N 50 --k 5 --F 0.01`
+- run the FastPLBF: `python src/PLBFs/FastPLBF.py --data_path data/example.csv --N 50 --k 5 --F 0.01`
+- run the FastPLBF++: `python src/PLBFs/FastPLBFpp.py --data_path data/example.csv --N 50 --k 5 --F 0.01`
 
-For **Ember** data:
-- Run `python3 plbf/utils/train_ember.py` to train a model and obtain a file with keys/scores/labels
+## Framework in our paper
 
-## Obtaining Querysets
-Creating the queries involves multiple steps and scripts from different folders. The end result will be a CSV File where the second column is an index describing the row of the key in the original dataset, and an (optional) CSV File containing index-count pairs.
-- First, run `make` to access the `write_queries` executable, which you can use to create a binary containing integers representing query indices. `write_queries` takes the number of queries and an optional Zipfian constant as arguments (without the constant, it will assume it must generate a uniform distribution of queries instead).
-    - For example, to create a uniform distribution binary file with 10M queries, run `./adaptiveqf/write_queries 10000000`
-    - For example, to create a zipfian distribution binary file with 10M queries, run `./adaptiveqf/write_queries 10000000 1.5`
-- Next, we convert these query binaries into CSVs for convenience. The scripts for these are inside the FASTPLBF folder
-    - To convert the binary into a CSV where the second column is a query index, run `python3 plbf/utils/convert_query_binaries.py`
-    - Then, if the files are too large to process, run `python3 plbf/utils/shorten_indexes.py` to obtain a CSV File containing index-count pairs.
+This framework is designed to minimize the expected false positive rate under the condition of memory usage.
 
+**Input arguments**
+- `--data_path`: Csv file contains the items, scores, and labels
+- `--N`: Number of *segments*
+- `--k`: Number of *regions*
+- `--M`: Target memory usage for backup Bloom filters
 
-## Running Queries
-At this point, we should have trained models, scored datasets, and filters available. We can now run the tests using each queryset.
-
-### **AdaptiveQF** tests:
-The **AdaptiveQF** takes into account `q`, where there are 2<sup>`q`</sup> slots in the filter, and `r`, describing the size of the fingerprint in bits. Generally, we set `q` such that the number of slots in the filter is above the number of elements in the dataset.
-- `test_one_pass` will perform the one-pass test (where every element in the dataset is queried once) for the given dataset, taking the number of elements and the path to the dataset as arguments. For example, to run the one-pass test on the Ember dataset, you can use `./adaptiveqf/test_one_pass 20 7 800000 datasets/combined_ember_metadata.csv`
-- `test_distribution` will perform queries based on the given query indexes, taking the number of queries, path to dataset, and path to queries as arguments. For example, to run 10M Zipfian queries on the Ember dataset, you can use `./adaptiveqf/test_distribution 20 7 10000000 datasets/combined_ember_metadata.csv datasets/query_indices/hashed_zipf_10M_ember.csv`
-
-### **PLBF** tests:
-The **PLBF** takes into account `N`, the number of segments to split the score distribution into, `k`, the number of regions (and thus the number of underlying filters), and `M`, the memory in bytes we allow for the underlying filters. We set `M` to match the size of the **AdaptiveQF** to allow for memory-efficiency comparisons.
-
-`FastPLBF_M_dist.py` will perform queries based on the given query index file, leaving out a query index file indicates that you prefer to do the one-pass test instead.
-- For example, to run the one-pass test on the Malicious URLs dataset, you can use `python3 plbf/src/PLBFs/FastPLBF_M_dist.py --data_path data/malicious_url_scores.csv --N 1000 --k 5 --M 299069`
-- For example, to run 10M Uniform queries on the Malicious URLs dataset, you can use `python3 plbf/src/PLBFs/FastPLBF_M_dist.py --data_path data/malicious_url_scores.csv --query_path data/query_indices/hashed_unif_10M_url.csv --N 1000 --k 5 --M 299069`
-
-### **Ada-BF** tests:
-(insert Aidan info here)
+**Commands**
+- run the PLBF_M: `python src/PLBFs/PLBF_M.py --data_path data/example.csv --N 50 --k 5 --M 1000`
+- run the FastPLBF_M: `python src/PLBFs/FastPLBF_M.py --data_path data/example.csv --N 50 --k 5 --M 1000`
+- run the FastPLBF++_M: `python src/PLBFs/FastPLBFpp_M.py --data_path data/example.csv --N 50 --k 5 --M 1000`
