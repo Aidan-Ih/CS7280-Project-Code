@@ -17,8 +17,8 @@ For **URL** and **News** data:
 - To obtain datasets:
     - Take **URL** and **News** data from Kaggle
 - To train models:
-    - URL: (insert Aidan info here)
-    - News: (insert Aidan info here)
+    - URL: Vectorize URL data, an example can be found [here](https://www.kaggle.com/code/bytadit/malicious-url-detection-with-ml-96-7-acc/notebook#Importing-Library). Then, train a [Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html). We used 50 estimators with 20 nodes each. 
+    - News: Pass news title and text through [TfidfVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html). Then, train a [Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html). We used 15 estimators with 10 nodes each. 
 
 For **Ember** data:
 - Run `python3 plbf/utils/train_ember.py` to train a model and obtain a file with keys/scores/labels
@@ -51,6 +51,6 @@ The **PLBF** takes into account `N`, the number of segments to split the score d
 ### **Ada-BF** tests:
 The **Ada-BF** takes into account 'k_min, k_max' which define the minimum and maximum number of segments to split the score distribution, and 'c_min, c_max' which define a test range for c which we will optimize. 
 
-'ada_bf_indexes_query.py' will perform queries based on the given query index file. Leaving out the query index ifle indicates that you prefer to do the one-pass test instead. 
+`ada_bf_indexes_query.py` will perform queries based on the given query index file. Leaving out the query index ifle indicates that you prefer to do the one-pass test instead. 
 - For example, to run the one-pass test on the Malicious URL's dataset, you can use `python ada_bf_indexes_query.py --data_path --data_path data/malicious_url_scores.csv --size_of_Ada_BF 20000  --num_group_min 8  --num_group_max 12  --c_min 1.6  --c_m`
 - For example, to run 10M Uniform queries on the Malicious URLs dataset, you can use  `python ada_bf_indexes_query.py --data_path --data_path data/malicious_url_scores.csv --query_path data/query_indices/hashed_unif_10M_url.csv --size_of_Ada_BF 20000  --num_group_min 8  --num_group_max 12  --c_min 1.6  --c_m`
