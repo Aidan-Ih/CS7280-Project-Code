@@ -1,6 +1,3 @@
 [submodule "adaptiveqf"]
 	path = adaptiveqf
 	url = https://github.com/diandremiguels/AdaptiveQFDistributions.git
-[submodule "Ada-BF"]
-	path = Ada-BF
-	url = git@github.com:DAIZHENWEI/Ada-BF.git
