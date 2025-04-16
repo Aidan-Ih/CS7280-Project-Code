@@ -17,8 +17,8 @@ For **URL** and **News** data:
 - To obtain datasets:
     - Take **URL** and **News** data from Kaggle
 - To train models:
-    - URL: (insert Aidan info here)
-    - News: (insert Aidan info here)
+    - URL: Vectorize URL data, an example can be found [here](https://www.kaggle.com/code/bytadit/malicious-url-detection-with-ml-96-7-acc/notebook#Importing-Library). Then, train a [Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html). We used 50 estimators with 20 nodes each. 
+    - News: Pass news title and text through [TfidfVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html). Then, train a [Random Forest Classifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html). We used 15 estimators with 10 nodes each. 
 
 For **Ember** data:
 - Run `python3 plbf/utils/train_ember.py` to train a model and obtain a file with keys/scores/labels
